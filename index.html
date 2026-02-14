@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎁 Lagniappe — кейсы</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .main-card {
+            background: #141414;
+            border-radius: 32px;
+            padding: 20px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid #2a2a2a;
+        }
+
+        /* ШАПКА */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 2px solid #ffd966;
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-balance {
+            color: #ffd966;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        /* РУЛЕТКА */
+        .wheel-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .wheel-container {
+            background: #1e1e1e;
+            border-radius: 24px;
+            padding: 20px 0;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+
+        .wheel-items {
+            display: flex;
+            gap: 8px;
+            animation: none;
+            padding: 0 20px;
+        }
+
+        .wheel-item {
+            min-width: 70px;
+            height: 90px;
+            background: #2a2a2a;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #444;
+            flex-shrink: 0;
+            transition: all 0.1s;
+            position: relative;
+        }
+
+        .wheel-item.highlight {
+            border: 3px solid #2ea6ff;
+            box-shadow: 0 0 20px rgba(46,166,255,0.5);
+            transform: scale(1.05);
+            background: #333;
+        }
+
+        .prize-emoji {
+            font-size: 32px;
+        }
+
+        .prize-price {
+            font-size: 12px;
+            color: #ffd966;
+            font-weight: 600;
+        }
+
+        /* СИНЯЯ ПОЛОСКА-УКАЗАТЕЛЬ */
+        .pointer {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: #2ea6ff;
+            box-shadow: 0 0 15px #2ea6ff;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .pointer::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -6px;
+            width: 16px;
+            height: 16px;
+            background: #2ea6ff;
+            border-radius: 50%;
+            filter: blur(4px);
+        }
+
+        /* КНОПКА */
+        .open-btn {
+            background: linear-gradient(135deg, #ffd966, #ffb347);
+            color: #0a0a0a;
+            border: none;
+            border-radius: 60px;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: 0.2s;
+            box-shadow: 0 8px 20px rgba(255,215,0,0.2);
+        }
+
+        .open-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        /* СПИСОК ПРИЗОВ */
+        .prizes-section {
+            background: #1e1e1e;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid #333;
+        }
+
+        .prizes-title {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .prizes-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .prize-card {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 8px;
+            width: calc(33.33% - 6px);
+            text-align: center;
+            border: 1px solid #444;
+        }
+
+        .prize-card-emoji {
+            font-size: 24px;
+        }
+
+        .prize-card-name {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .prize-card-price {
+            font-size: 10px;
+            color: #ffd966;
+        }
+
+        .prize-card-chance {
+            font-size: 9px;
+            color: #888;
+        }
+
+        /* РЕЗУЛЬТАТ */
+        .result-popup {
+            background: #1e1e1e;
+            border-radius: 20px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: center;
+            border: 2px solid #ffd966;
+            display: none;
+        }
+
+        .result-emoji {
+            font-size: 64px;
+            margin-bottom: 8px;
+        }
+
+        .result-text {
+            color: #ffd966;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-card">
+        <!-- ШАПКА -->
+        <div class="header">
+            <div class="avatar" id="avatar">😎</div>
+            <div class="user-info">
+                <div class="user-name" id="userName">Загрузка...</div>
+                <div class="user-balance" id="userBalance">1000 🪙</div>
+            </div>
+        </div>
+
+        <!-- РУЛЕТКА С УКАЗАТЕЛЕМ -->
+        <div class="wheel-wrapper">
+            <div class="pointer" id="pointer"></div>
+            <div class="wheel-container">
+                <div class="wheel-items" id="wheelItems">
+                    <!-- Сюда JS подставит призы -->
+                </div>
+            </div>
+        </div>
+
+        <!-- КНОПКА -->
+        <button class="open-btn" id="openBtn">🎲 ОТКРЫТЬ ЗА 100 🪙</button>
+
+        <!-- СПИСОК ПРИЗОВ -->
+        <div class="prizes-section">
+            <div class="prizes-title">🎯 Все призы:</div>
+            <div class="prizes-grid" id="prizesGrid">
+                <!-- Сюда JS подставит карточки -->
+            </div>
+        </div>
+
+        <!-- РЕЗУЛЬТАТ -->
+        <div class="result-popup" id="resultPopup">
+            <div class="result-emoji" id="resultEmoji">🎁</div>
+            <div class="result-text" id="resultText">Вы выиграли подарок!</div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.disableClosingConfirmation(); // НЕ закрываем после отправки
+        tg.BackButton.onClick(() => tg.close());
+
+        // ============ ДАННЫЕ ============
+        const prizes = [
+            { emoji: '🧸', name: 'Мишка', price: 15, chance: 42.5 },
+            { emoji: '💝', name: 'Сердце', price: 15, chance: 42.5 },
+            { emoji: '🎁', name: 'Подарок', price: 25, chance: 6 },
+            { emoji: '🌹', name: 'Роза', price: 25, chance: 5 },
+            { emoji: '🚀', name: 'Ракета', price: 50, chance: 0.8 },
+            { emoji: '🎂', name: 'Торт', price: 50, chance: 0.8 },
+            { emoji: '💐', name: 'Букет', price: 50, chance: 0.8 },
+            { emoji: '🍾', name: 'Шампанское', price: 50, chance: 0.8 },
+            { emoji: '💎', name: 'Бриллиант', price: 100, chance: 0.3 },
+            { emoji: '💍', name: 'Кольцо', price: 100, chance: 0.3 },
+            { emoji: '🏆', name: 'Кубок', price: 100, chance: 0.2 }
+        ];
+
+        // Создаём расширенный список для рулетки (чтобы красиво крутилось)
+        let wheelPrizes = [];
+        for (let i = 0; i < 30; i++) {
+            wheelPrizes.push(prizes[i % prizes.length]);
+        }
+
+        // ============ ЗАГРУЗКА ============
+        const user = tg.initDataUnsafe?.user;
+        document.getElementById('userName').textContent = user?.first_name || 'Игрок';
+        
+        if (user?.photo_url) {
+            document.getElementById('avatar').innerHTML = `<img src="${user.photo_url}">`;
+        }
+
+        // Баланс из localStorage
+        let balance = localStorage.getItem('balance') ? parseInt(localStorage.getItem('balance')) : 1000;
+        document.getElementById('userBalance').textContent = balance + ' 🪙';
+
+        // Отрисовка рулетки
+        function renderWheel() {
+            const container = document.getElementById('wheelItems');
+            container.innerHTML = '';
+            wheelPrizes.forEach((p, index) => {
+                const item = document.createElement('div');
+                item.className = 'wheel-item';
+                if (index === 14) item.classList.add('highlight'); // центральный
+                item.innerHTML = `
+                    <span class="prize-emoji">${p.emoji}</span>
+                    <span class="prize-price">${p.price}🪙</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Отрисовка сетки призов
+        function renderPrizesGrid() {
+            const grid = document.getElementById('prizesGrid');
+            grid.innerHTML = '';
+            prizes.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'prize-card';
+                card.innerHTML = `
+                    <div class="prize-card-emoji">${p.emoji}</div>
+                    <div class="prize-card-name">${p.name}</div>
+                    <div class="prize-card-price">${p.price}🪙</div>
+                    <div class="prize-card-chance">${p.chance}%</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Выбор случайного приза по шансам
+        function getRandomPrize() {
+            const rand = Math.random() * 100;
+            let sum = 0;
+            for (let p of prizes) {
+                sum += p.chance;
+                if (rand < sum) return p;
+            }
+            return prizes[0];
+        }
+
+        // ============ ОТКРЫТИЕ ============
+        document.getElementById('openBtn').addEventListener('click', function() {
+            if (balance < 100) {
+                alert('Недостаточно монет!');
+                return;
+            }
+
+            balance -= 100;
+            document.getElementById('userBalance').textContent = balance + ' 🪙';
+            localStorage.setItem('balance', balance);
+
+            const wheel = document.getElementById('wheelItems');
+            const itemWidth = 78; // ширина элемента + gap
+            const centerIndex = 14; // примерно центр
+
+            // Рандомная остановка (от 0 до wheelPrizes.length-1)
+            const stopIndex = Math.floor(Math.random() * wheelPrizes.length);
+            const targetPrize = wheelPrizes[stopIndex];
+
+            // Анимация прокрутки
+            let pos = 0;
+            const startTime = Date.now();
+            const duration = 2000; // 2 секунды
+
+            function animate() {
+                const now = Date.now();
+                const progress = Math.min((now - startTime) / duration, 1);
+                
+                // Замедление к концу
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                pos = easeOut * (stopIndex * itemWidth * 2); // крутимся
+                
+                wheel.style.transform = `translateX(${-pos}px)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Останавливаемся на нужном призе
+                    wheel.style.transform = `translateX(${-stopIndex * itemWidth}px)`;
+                    
+                    // Подсвечиваем выигрышный
+                    document.querySelectorAll('.wheel-item').forEach((el, idx) => {
+                        if (idx === stopIndex) {
+                            el.classList.add('highlight');
+                            el.style.border = '3px solid #ffd966';
+                        }
+                    });
+
+                    // Показываем результат
+                    document.getElementById('resultEmoji').textContent = targetPrize.emoji;
+                    document.getElementById('resultText').textContent = `Вы выиграли: ${targetPrize.name} (${targetPrize.price}🪙)!`;
+                    document.getElementById('resultPopup').style.display = 'block';
+
+                    // Отправка в Telegram
+                    tg.sendData(JSON.stringify({
+                        action: 'case_opened',
+                        prize: targetPrize.name,
+                        emoji: targetPrize.emoji,
+                        price: targetPrize.price
+                    }));
+
+                    if (tg.HapticFeedback) {
+                        tg.HapticFeedback.impactOccurred('heavy');
+                    }
+                }
+            }
+
+            animate();
+        });
+
+        // Инициализация
+        renderWheel();
+        renderPrizesGrid();
+    </script>
+</body>
+</html>
