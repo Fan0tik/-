@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎁 Lagniappe — кейсы</title>
+    <!-- Подключаем Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background: var(--tg-theme-bg-color, #0a0a0a);
+            color: var(--tg-theme-text-color, #fff);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffd966, #ffb347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.6;
+            margin-bottom: 30px;
+        }
+        .case {
+            background: var(--tg-theme-secondary-bg-color, #1e1e1e);
+            border-radius: 24px;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease;
+        }
+        .case-icon {
+            font-size: 72px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.6));
+        }
+        .case-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .case-price {
+            display: inline-block;
+            background: rgba(255,215,0,0.15);
+            color: #ffd966;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .open-btn {
+            background: var(--tg-theme-button-color, #2ea6ff);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 60px;
+            padding: 18px 32px;
+            font-size: 20px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 6px 14px rgba(46,166,255,0.3);
+            margin-bottom: 20px;
+        }
+        .open-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        .result {
+            background: var(--tg-theme-secondary-bg-color, #1e1e1e);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
+        .result-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .result-emoji {
+            font-size: 48px;
+        }
+        .result-name {
+            font-size: 22px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff, #ffd966);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .result-rarity {
+            font-size: 14px;
+            padding: 4px 16px;
+            border-radius: 40px;
+            background: rgba(255,215,0,0.1);
+            color: #aaa;
+        }
+        .footer {
+            font-size: 12px;
+            opacity: 0.4;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 LAGNIAPPE</h1>
+        <div class="subtitle">бонусы, подарки, NFT</div>
+
+        <div class="case">
+            <div class="case-icon">📦</div>
+            <div class="case-title">Таинственный кейс</div>
+            <div class="case-price">🪙 100 монет</div>
+        </div>
+
+        <button class="open-btn" id="openCaseBtn">🎲 ОТКРЫТЬ</button>
+
+        <div class="result" id="resultArea">
+            <div style="opacity: 0.3;">👇 нажми, чтобы открыть</div>
+        </div>
+
+        <div class="footer">@LagniappeBot • твой бонус каждый день</div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // разворачиваем на весь экран
+
+        // База данных подарков (можешь менять сколько хочешь)
+        const gifts = [
+            { emoji: '🎨', name: 'Digital Canvas', rarity: 'common' },
+            { emoji: '🖼️', name: 'Pixel Art', rarity: 'common' },
+            { emoji: '🎭', name: 'Mystic Mask', rarity: 'rare' },
+            { emoji: '⚔️', name: 'Legendary Sword', rarity: 'epic' },
+            { emoji: '👑', name: 'Crypto Crown', rarity: 'legendary' },
+            { emoji: '💎', name: 'Diamond Heart', rarity: 'mythic' },
+            { emoji: '🔮', name: 'Magic Orb', rarity: 'rare' },
+            { emoji: '📀', name: 'Golden Disk', rarity: 'epic' },
+            { emoji: '🧿', name: 'Nazar Amulet', rarity: 'rare' },
+            { emoji: '🪙', name: 'Bitcoin Shell', rarity: 'legendary' }
+        ];
+
+        // Редкости и их цвета
+        const rarityColors = {
+            common: '#a0a0a0',
+            rare: '#4a90e2',
+            epic: '#9b59b6',
+            legendary: '#f39c12',
+            mythic: '#e74c3c'
+        };
+
+        // Функция открытия кейса
+        function openCase() {
+            const resultDiv = document.getElementById('resultArea');
+            
+            // Анимация "открывается"
+            resultDiv.innerHTML = '<div style="opacity:0.5;">🎲 открываем...</div>';
+
+            // Имитация задержки открытия
+            setTimeout(() => {
+                // Рандомный подарок
+                const randomIndex = Math.floor(Math.random() * gifts.length);
+                const gift = gifts[randomIndex];
+                
+                // Цвет редкости
+                const rarityColor = rarityColors[gift.rarity] || '#ffffff';
+
+                // Формируем результат
+                resultDiv.innerHTML = `
+                    <div class="result-item">
+                        <div class="result-emoji">${gift.emoji}</div>
+                        <div class="result-name" style="color: ${rarityColor};">${gift.name}</div>
+                        <div class="result-rarity">${gift.rarity.toUpperCase()}</div>
+                    </div>
+                `;
+
+                // Отправляем данные боту (Telegram отправит их в бэкенд)
+                tg.sendData(JSON.stringify({
+                    action: 'case_opened',
+                    gift: gift.name,
+                    rarity: gift.rarity
+                }));
+
+                // Можно вибро если поддерживается
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+
+            }, 400); // 0.4 сек анимации
+        }
+
+        // Вешаем событие на кнопку
+        document.getElementById('openCaseBtn').addEventListener('click', openCase);
+
+        // Доп. прикол: если юзер нажал аппаратную кнопку "назад" — закрываем
+        tg.BackButton.onClick(() => tg.close());
+    </script>
+</body>
+</html>
